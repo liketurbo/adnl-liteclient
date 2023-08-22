@@ -113,7 +113,7 @@ impl InitConnection {
         rand::thread_rng().fill_bytes(&mut aes_params);
 
         let rx_cipher = AesCipher::new(
-            aes_params[0..32].try_into().unwrap(),
+            aes_params[..32].try_into().unwrap(),
             aes_params[64..80].try_into().unwrap(),
         );
         let tx_cipher = AesCipher::new(
@@ -177,12 +177,15 @@ impl EstablishedConnection {
     pub async fn receive(&mut self) -> Result<Option<DatagramKind>> {
         loop {
             let mut buf = Cursor::new(&self.buffer[..]);
-            if let datagram = DatagramKind::parse(&mut buf, &mut self.rx_cipher)? {
-                return Ok(Some(datagram));
+
+            if DatagramKind::check(&buf) {
+                if let datagram = DatagramKind::parse(&mut buf, &mut self.rx_cipher)? {
+                    self.buffer.advance(buf.position() as usize);
+                    return Ok(Some(datagram));
+                }
             }
 
-            self.buffer.advance(buf.position() as usize);
-            if 0 == self.stream.read_buf(&mut self.buffer).await? {
+            if self.stream.read_buf(&mut self.buffer).await? == 0 {
                 if self.buffer.is_empty() {
                     return Ok(None);
                 }
@@ -193,8 +196,11 @@ impl EstablishedConnection {
 
     pub async fn send(&mut self, buf: &[u8]) -> Result<()> {
         let datagram = Datagram::from_buf(buf)?;
-        let enc_bytes = datagram.to_enc_bytes(&mut self.tx_cipher);
-        self.stream.write(&enc_bytes).await?;
+        println!("sent datagram: {:?}", datagram);
+        let mut bytes = datagram.to_bytes();
+        self.tx_cipher.apply_keystream(&mut bytes);
+        self.stream.write(&bytes).await?;
+        self.stream.flush().await?;
         Ok(())
     }
 }
