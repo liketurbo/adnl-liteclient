@@ -1,6 +1,4 @@
-use crate::AesCipher;
 use crate::Result;
-use aes::cipher::StreamCipher;
 use bytes::Buf;
 use rand::prelude::*;
 use sha2::{Digest, Sha256};
@@ -21,10 +19,9 @@ impl DatagramKind {
         src.remaining() >= LENGTH_LEN + NONCE_LEN + HASH_LEN
     }
 
-    pub fn parse(src: &mut Cursor<&[u8]>, decryptor: &mut AesCipher) -> Result<DatagramKind> {
+    pub fn parse(src: &mut Cursor<&[u8]>) -> Result<DatagramKind> {
         let mut length_bytes = [0u8; LENGTH_LEN];
         src.copy_to_slice(&mut length_bytes);
-        decryptor.apply_keystream(&mut length_bytes);
 
         let len = u32::from_le_bytes(length_bytes) as usize;
         if len < NONCE_LEN + HASH_LEN {
@@ -33,12 +30,10 @@ impl DatagramKind {
 
         let mut nonce_bytes = [0u8; NONCE_LEN];
         src.copy_to_slice(&mut nonce_bytes);
-        decryptor.apply_keystream(&mut nonce_bytes);
 
         if len == NONCE_LEN + HASH_LEN {
             let mut hash_bytes = [0u8; HASH_LEN];
             src.copy_to_slice(&mut hash_bytes);
-            decryptor.apply_keystream(&mut hash_bytes);
 
             let nonce_hash = Sha256::new().chain_update(&nonce_bytes).finalize();
             if nonce_hash[..] != hash_bytes[..] {
@@ -51,11 +46,9 @@ impl DatagramKind {
         let mut buf = [0u8; BUFFER_LEN];
         let mut buf_data = &mut buf[..get_buf_len(len)];
         src.copy_to_slice(&mut buf_data);
-        decryptor.apply_keystream(&mut buf_data);
 
         let mut hash_bytes = [0u8; HASH_LEN];
         src.copy_to_slice(&mut hash_bytes);
-        decryptor.apply_keystream(&mut hash_bytes);
 
         let datagram_hash = Sha256::new()
             .chain_update(&nonce_bytes)

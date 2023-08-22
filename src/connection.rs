@@ -179,7 +179,7 @@ impl EstablishedConnection {
             let mut buf = Cursor::new(&self.buffer[..]);
 
             if DatagramKind::check(&buf) {
-                if let datagram = DatagramKind::parse(&mut buf, &mut self.rx_cipher)? {
+                if let datagram = DatagramKind::parse(&mut buf)? {
                     self.buffer.advance(buf.position() as usize);
                     return Ok(Some(datagram));
                 }
@@ -191,6 +191,8 @@ impl EstablishedConnection {
                 }
                 return Err("connection reset by peer".into());
             }
+
+            self.rx_cipher.apply_keystream(&mut self.buffer);
         }
     }
 
