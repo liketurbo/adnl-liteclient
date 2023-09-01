@@ -8,5 +8,6 @@ async fn main() {
     )
     .await
     .unwrap();
-    client.ping().await.unwrap();
+    let current_time = client.get_time().await.unwrap();
+    println!("{:?}", current_time);
 }

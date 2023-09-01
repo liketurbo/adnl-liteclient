@@ -3,6 +3,7 @@ use base64::{engine::general_purpose, Engine as _};
 pub mod client;
 pub mod connection;
 pub mod datagram;
+pub mod tl_types;
 
 pub type Error = Box<dyn std::error::Error>;
 pub type Result<T> = std::result::Result<T, Error>;

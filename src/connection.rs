@@ -1,4 +1,4 @@
-use crate::datagram::{Datagram, DatagramKind};
+use crate::datagram::Datagram;
 use crate::{AesCipher, Result};
 use aes::cipher::{KeyIvInit, StreamCipher};
 use bytes::{Buf, BytesMut};
@@ -147,9 +147,9 @@ impl InitConnection {
 
         let mut est_connection = EstablishedConnection::new(self.stream, rx_cipher, tx_cipher);
 
-        let datagram = est_connection.receive().await?;
+        let datagram = est_connection.read_datagram().await?;
 
-        if let Some(DatagramKind::Empty) = datagram {
+        if let Some(Datagram::Empty { .. }) = datagram {
             Ok(est_connection)
         } else {
             Err("handshake failed".into())
@@ -174,12 +174,12 @@ impl EstablishedConnection {
         }
     }
 
-    pub async fn receive(&mut self) -> Result<Option<DatagramKind>> {
+    pub async fn read_datagram(&mut self) -> Result<Option<Datagram>> {
         loop {
             let mut buf = Cursor::new(&self.buffer[..]);
 
-            if DatagramKind::check(&buf) {
-                if let datagram = DatagramKind::parse(&mut buf)? {
+            if Datagram::check(&buf) {
+                if let datagram = Datagram::parse(&mut buf)? {
                     self.buffer.advance(buf.position() as usize);
                     return Ok(Some(datagram));
                 }
@@ -196,13 +196,12 @@ impl EstablishedConnection {
         }
     }
 
-    pub async fn send(&mut self, buf: &[u8]) -> Result<()> {
-        let datagram = Datagram::from_buf(buf)?;
-        println!("sent datagram: {:?}", datagram);
+    pub async fn write_datagram(&mut self, datagram: &Datagram) -> Result<()> {
         let mut bytes = datagram.to_bytes();
         self.tx_cipher.apply_keystream(&mut bytes);
         self.stream.write(&bytes).await?;
         self.stream.flush().await?;
+
         Ok(())
     }
 }
