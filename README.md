@@ -1,6 +1,6 @@
 # ADNL Liteclient
 
-This is an unfinished, idiomatic implementation of the ADNL Liteclient, built using [Tokio](https://tokio.rs/).
+This is an unfinished, simplified implementation of the ADNL Liteclient, built using [Tokio](https://tokio.rs/).
 
 This project was never intended for production use but rather as a learning experience for working with [Tokio](https://tokio.rs/) and gaining a deeper understanding of the  [TON](https://ton.org) protocols.
 
