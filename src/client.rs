@@ -1,8 +1,8 @@
 use crate::tl_types::Query;
 use crate::tl_types::{CurrentTime, GetTime};
-use crate::Result;
 use adnl_tcp::Client as AdnlClient;
 use adnl_tcp::ToPublicKey;
+use anyhow::Result;
 use tokio::net::ToSocketAddrs as ToSocketAddr;
 
 pub struct Client {

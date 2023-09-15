@@ -9,6 +9,7 @@ edition = "2021"
 adnl-tcp = { git = "https://github.com/liketurbo/adnl-tcp.git", branch = "main" }
 tl-proto = "0.4.3"
 tokio = { version = "1", default-features = false }
+anyhow = "1.0"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full"] }
