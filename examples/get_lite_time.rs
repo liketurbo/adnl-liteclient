@@ -1,4 +1,4 @@
-use adnl_liteclient::client::Client;
+use adnl_liteclient::Client;
 
 #[tokio::main]
 async fn main() {
